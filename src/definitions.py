@@ -1,7 +1,7 @@
 # currently, none of these definitions
 # are used. however, they may be utilized later...
 
-global parentalRatings, genres, languages
+global parentalRatings, genres, languages, fields
 
 parentalRatings = [None, "G", "PG", "PG-13", "R", "Other"]
 
@@ -14,3 +14,16 @@ languages = [None, "English", "French", "Spanish", "German",
                 "Russian", "Arabic", "Korean", "Hebrew", "Cantonese",
                 "Portuguese", "Swedish", "Latin", "Ukranian", "Danish",
                 "Persian", "Other"]
+
+fields = ["url",
+          "title",
+          "rating",
+          "numOfRatings",
+          "popularity",
+          "numOfAwards",
+          "parentalRating",
+          "yearMade",
+          "genre",
+          "language",
+          "length",
+          "gross"]

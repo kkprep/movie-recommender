@@ -1,12 +1,26 @@
 import requests
 from bs4 import BeautifulSoup
 
-class Movie():
-    def __init__(self, url: str):
-        self.attributes = {}
+from handleCSV import HandleCSV
 
+class Movie():
+    def __init__(self, url: str, csv: HandleCSV):
         # add check to verify the domain is "imdb.com"
         self.url = url
+        print(f"Processing: {self.url}")
+        self.repeat = False
+        if csv.isRepeat(self.url):
+            self.repeat = True
+            return
+
+        self.csv = csv
+        self.attributes = {}
+
+        self.page = requests.get(self.url) # get page HTML through request
+        self.soup = BeautifulSoup(self.page.content, "html.parser") # parse content
+
+        self.repeat = False # have webscraped this movie already
+
         self.webScrape()
 
     def setMovie(self, url: str):
@@ -16,23 +30,23 @@ class Movie():
 
     def webScrape(self):
         # may need to add try-except block
-        page = requests.get(self.url) # get page HTML through request
-        soup = BeautifulSoup(page.content, "html.parser") # parse content
-        
-        self.attributes["title"] = soup.select(".TitleHeader__TitleText-sc-1wu6n3d-0")
-        self.attributes["rating"] = soup.select(".AggregateRatingButton__RatingScore-sc-1ll29m0-1")
-        self.attributes["numOfRatings"] = soup.select(".AggregateRatingButton__TotalRatingAmount-sc-1ll29m0-3")
-        self.attributes["popularity"] = soup.select(".TrendingButton__TrendingScore-bb3vt8-1")
-        self.attributes["numOfAwards"] = soup.select("li[data-testid=\"award_information\"] div ul li span")
-        self.attributes["parentalRating"] = soup.select(".TitleBlock__TitleMetaDataContainer-sc-1nlhx7j-2 ul li a")
-        self.attributes["yearMade"] = soup.select(".TitleBlock__TitleMetaDataContainer-sc-1nlhx7j-2 ul li a")
-        self.attributes["genre"] = soup.select("div[data-testid=\"genres\"] a span")
-        self.attributes["language"] = soup.select("li[data-testid=\"title-details-languages\"] div ul li a")
-        self.attributes["length"] = soup.select("li[data-testid=\"title-techspec_runtime\"] div ul li span")
-        self.attributes["gross"] = soup.select("li[data-testid=\"title-boxoffice-cumulativeworldwidegross\"] div ul li span")
+        self.attributes["url"] = self.url # identifier
+        self.attributes["title"] = self.soup.select(".TitleHeader__TitleText-sc-1wu6n3d-0")
+        self.attributes["rating"] = self.soup.select(".AggregateRatingButton__RatingScore-sc-1ll29m0-1")
+        self.attributes["numOfRatings"] = self.soup.select(".AggregateRatingButton__TotalRatingAmount-sc-1ll29m0-3")
+        self.attributes["popularity"] = self.soup.select(".TrendingButton__TrendingScore-bb3vt8-1")
+        self.attributes["numOfAwards"] = self.soup.select("li[data-testid=\"award_information\"] div ul li span")
+        self.attributes["parentalRating"] = self.soup.select(".TitleBlock__TitleMetaDataContainer-sc-1nlhx7j-2 ul li a")
+        self.attributes["yearMade"] = self.soup.select(".TitleBlock__TitleMetaDataContainer-sc-1nlhx7j-2 ul li a")
+        self.attributes["genre"] = self.soup.select("div[data-testid=\"genres\"] a span")
+        self.attributes["language"] = self.soup.select("li[data-testid=\"title-details-languages\"] div ul li a")
+        self.attributes["length"] = self.soup.select("li[data-testid=\"title-techspec_runtime\"] div ul li span")
+        self.attributes["gross"] = self.soup.select("li[data-testid=\"title-boxoffice-cumulativeworldwidegross\"] div ul li span")
         # ...
 
         self.parse()
+
+        self.addRowToPandas()
 
     """ format attributes """
     def parse(self):
@@ -54,8 +68,11 @@ class Movie():
         else:
             self.attributes["numOfRatings"] = str(self.attributes["numOfRatings"][0].text).lower()
             if 'k' in self.attributes["numOfRatings"]:
-                self.attributes["numOfRatings"] = int(self.attributes["numOfRatings"][:-1]) * 1000
-            self.attributes["numOfRatings"] = int(self.attributes["numOfRatings"])
+                self.attributes["numOfRatings"] = float(self.attributes["numOfRatings"][:-1]) * 1000
+            elif 'm' in self.attributes["numOfRatings"]:
+                self.attributes["numOfRatings"] = float(self.attributes["numOfRatings"][:-1]) * 1_000_000
+            else:
+                self.attributes["numOfRatings"] = float(self.attributes["numOfRatings"])
 
         # popularity
         if len(self.attributes["popularity"]) == 0:
@@ -168,6 +185,7 @@ class Movie():
         print(text)
         print(('_' * length) + '\n')
 
+        print("URL: {}".format(self.attributes["url"]))
         print("Title: {}".format(self.attributes["title"]))
         print("Rating (_/10): {}".format(self.attributes["rating"]))
         print("Number of Ratings: {}".format(self.attributes["numOfRatings"]))
@@ -179,3 +197,22 @@ class Movie():
         print("Language(s): {}".format(self.attributes["language"]))
         print("Length: {} minutes".format(self.attributes["length"]))
         print("Gross Worldwide: ${}".format(self.attributes["gross"]))
+
+    def addRowToPandas(self):
+        self.csv.addRow(self.attributes)
+
+    def findSimilar(self) -> list:
+        queue = []
+        temp = self.soup.select("section[data-testid=\"MoreLikeThis\"] div div div div a")
+        for item in temp:
+            item = str(item["href"])
+
+            end = item.find("/?") # clean url
+            if end == -1:
+                end = len(item)
+
+            item = item[:end]
+            item = "https://imdb.com" + item
+            queue.append(item)
+
+        return queue
