@@ -1,4 +1,5 @@
 import pandas as pd
+from pandas.io.parsers import TextFileReader
 
 class HandleCSV():
     def __init__(self, filename):
@@ -15,3 +16,9 @@ class HandleCSV():
 
     def writeToCSV(self):
         self.df.to_csv("movies.csv", mode='a', header=False)
+
+    def getFeature(self, feature: str):
+        # warning: there is NO check to validate that <feature>
+        # exists in <self.df>
+        dfCopy = self.df.dropna()
+        return dfCopy[feature]
