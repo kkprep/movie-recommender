@@ -62,6 +62,7 @@ class Plot():
         self.prepareHistogram(feature, bins, bounds, xlabel, ylabel, title)
         plt.show()
 
+    # make a histogram of # of wins, # of nominations, total
     def plotNumOfAwards(self):
         feature = self.csv.getFeature("numOfAwards")
 

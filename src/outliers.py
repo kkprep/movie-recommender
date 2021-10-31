@@ -4,6 +4,8 @@ import pandas as pd
 from ast import literal_eval
 import traceback
 
+# create multidimensional regression
+
 class Outliers():
     def __init__(self, csv: HandleCSV):
         self.df = csv.df.copy()

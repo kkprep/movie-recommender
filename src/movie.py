@@ -199,7 +199,10 @@ class Movie():
         print("Gross Worldwide: ${}".format(self.attributes["gross"]))
 
     def addRowToPandas(self):
-        self.csv.addRow(self.attributes)
+        try:
+            self.csv.addRow(self.attributes)
+        except:
+            pass
 
     def findSimilar(self) -> list:
         queue = []
