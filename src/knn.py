@@ -10,6 +10,38 @@ csv = HandleCSV("temp.csv")
 movie = Movie(url, csv)
 attributes = [movie.attributes["numOfRatings"], movie.attributes["popularity"], movie.attributes["gross"], movie.attributes["rating"]]
 
+# FIXED ==> [CRITICAL BUG] NEED TO NORMALIZE THE ATTRIBUTES
+###################### BAD - DUPLICATE CODE FROM NORMALIZATION.PY ##########################################
+fp = open("inliers", "rb")
+data = np.load(fp, allow_pickle=True)
+
+# 4 features: rating, numOfRatings, popularity, gross
+numOfRatings = data[:, 0]
+numOfRatings = numOfRatings[0]
+maxNumOfRatings = np.amax(numOfRatings)
+minNumOfRatings = np.amin(numOfRatings)
+
+popularity = data[:, 0]
+popularity = popularity[1]
+maxPopularity = np.amax(popularity)
+minPopularity = np.amin(popularity)
+
+gross = data[:, 0]
+gross = gross[2]
+maxGross = np.amax(gross)
+minGross = np.amin(gross)
+
+rating = data[:, 1]
+maxRating = np.amax(rating)
+minRating = np.amin(rating)
+
+# normalize data (between 0 and 1, inclusive)
+# xnorm = (xi - xmin) / (xmax - xmin)
+for i in range(len(attributes)):
+    attributes[i] = (attributes[i] - minNumOfRatings) / (maxNumOfRatings - minNumOfRatings)
+
+#######################################################################################################
+
 fp = open("normalized", "rb")
 data = np.load(fp, allow_pickle=True)
 distances = {} # index:distance
