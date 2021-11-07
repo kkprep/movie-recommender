@@ -2,6 +2,7 @@
 from movie import Movie
 from handleCSV import HandleCSV
 import numpy as np
+from ast import literal_eval
 
 # given a movie, outputs 5 similar movies
 url = input("Enter IMDb url of a movie you enjoy: ")
@@ -57,7 +58,24 @@ sortedDistances = dict(sorted(distances.items(), key=lambda x:x[1]))
 sortedDistances = list(sortedDistances.keys())
 print("Here are the most similar movies I could find:")
 print("----------------------------------")
-for i in range(5):
-    # print 5 most similar movies
-    print(str(data[sortedDistances[i], 2]))
-    print("----------------------------------")
+i = 0
+count = 0
+while True:
+    if count != 5:
+        inputMovieURL = url
+        inputMovieGenres = movie.attributes["genre"]
+
+        recommendedMovieURL = data[sortedDistances[i], 2].to_string()[7:]
+        recommendedMovieGenres = HandleCSV("movies.csv")
+        recommendedMovieGenres = recommendedMovieGenres.df[recommendedMovieGenres.df["url"] == recommendedMovieURL].reset_index()
+        recommendedMovieGenres = recommendedMovieGenres["genre"].to_string()[5:]
+        recommendedMovieGenres = literal_eval(recommendedMovieGenres)
+        for g in inputMovieGenres:
+            if g in recommendedMovieGenres:
+                print(recommendedMovieURL)
+                count += 1
+                break
+
+        i += 1
+    else:
+        break
